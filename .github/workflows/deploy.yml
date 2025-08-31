@@ -43,7 +43,7 @@ jobs:
       # Step 6: Deploy manifests to EKS
       - name: Deploy manifests to EKS
         run: |
-          kubectl apply -f k8s/
+          kubectl apply -f EKS/
 
 
 #  # Step 4: Log in to Amazon ECR
