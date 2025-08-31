@@ -55,8 +55,8 @@ jobs:
       # Step 7: Deploy manifests to EKS
       - name: Deploy to EKS
         run: |
-          kubectl set image deployment/flask-deployment flask-container=${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
-          kubectl rollout status deployment/flask-deployment
+          kubectl set image deployment/flask-app flask-app=${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          kubectl rollout status deployment/flask-app
 
 
 # name: "CI/CD Pipeline (EKS + ECR via OIDC)"
