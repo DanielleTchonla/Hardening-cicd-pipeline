@@ -29,8 +29,8 @@ jobs:
         run: |
           aws sts get-caller-identity
             - name: Update kubeconfig for EKS
-        run: |
-          aws eks update-kubeconfig --name cicd-cluster --region us-east-1
+        # run: |
+        #   aws eks update-kubeconfig --name cicd-cluster --region us-east-1
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
