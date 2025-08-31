@@ -36,22 +36,22 @@ jobs:
 
       # Step 5: Set up kubectl
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
+        uses: actions/setup-kubectl@v3
         with:
           version: 'latest'
 
       # Step 6: Deploy manifests to EKS
       - name: Deploy manifests to EKS
         run: |
-          kubectl apply -f EKS/
+          kubectl apply -f eks/
 
 
-#  # Step 4: Log in to Amazon ECR
+#  # Step 7: Log in to Amazon ECR
 #       - name: Login to Amazon ECR
 #         id: login-ecr
 #         uses: aws-actions/amazon-ecr-login@v2
 
-#       # Step 5: Build and push Docker image
+#       # Step 8: Build and push Docker image
 #       - name: Build, tag, and push Docker image
 #         env:
 #           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
