@@ -40,30 +40,31 @@ jobs:
         with:
           version: 'latest'
 
-      # Step 6: Deploy manifests to EKS
-      - name: Deploy manifests to EKS
+
+ # Step 7: Log in to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step 8: Build and push Docker image
+      - name: Build, tag, and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: flask-cicd
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          kubectl apply -f eks/
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      #       # Step 6: Deploy manifests to EKS
+      # - name: Deploy manifests to EKS
+      #   run: |
+      #     kubectl apply -f eks/
 
 
-#  # Step 7: Log in to Amazon ECR
-#       - name: Login to Amazon ECR
-#         id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v2
-
-#       # Step 8: Build and push Docker image
-#       - name: Build, tag, and push Docker image
-#         env:
-#           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#           ECR_REPOSITORY: flask-cicd
-#           IMAGE_TAG: ${{ github.sha }}
-#         run: |
-#           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-#           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-#       # Step 6: Update EKS deployment
-#       - name: Update Kubernetes deployment
-#         run: |
-#           aws eks update-kubeconfig --region us-east-1 --name cicd-cluster
-#           kubectl set image deployment/flask-cicd flask-cicd=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#           kubectl rollout status deployment/flask-cicd
+      # Step 9: Update EKS deployment
+      - name: Update Kubernetes deployment
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name cicd-cluster
+          kubectl set image deployment/flask-cicd flask-cicd=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          kubectl rollout status deployment/flask-cicd
