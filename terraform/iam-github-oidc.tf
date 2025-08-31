@@ -38,6 +38,40 @@ resource "aws_iam_role" "github_actions" {
     ]
   })
 }
+# allows our GitHub Actions role to update kubeconfig and 
+# interact with our EKS cluster without giving full admin access.
+resource "aws_iam_policy" "github_actions_eks_policy" {
+  name        = "GitHubActionsEKSMinimalPolicy"
+  description = "Minimal permissions for GitHub Actions to access EKS cluster"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "eks:ListNodegroups",
+          "eks:ListFargateProfiles"
+        ]
+        Resource = "arn:aws:eks:us-east-1:746669235620:cluster/cicd-cluster"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "sts:AssumeRole"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_github_actions_eks_policy" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.github_actions_eks_policy.arn
+}
 
 
 # IAM Role Policy Attachments
@@ -62,3 +96,4 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_logs" {
   role       = aws_iam_role.github_actions.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
 }
+
