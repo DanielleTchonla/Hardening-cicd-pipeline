@@ -28,3 +28,25 @@ jobs:
       - name: Test OIDC assume role
         run: |
           aws sts get-caller-identity
+
+ # Step 4: Log in to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step 5: Build and push Docker image
+      - name: Build, tag, and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: flask-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      # Step 6: Update EKS deployment
+      - name: Update Kubernetes deployment
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name cicd-cluster
+          kubectl set image deployment/flask-app flask-app=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          kubectl rollout status deployment/flask-app
