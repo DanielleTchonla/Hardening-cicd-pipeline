@@ -36,7 +36,7 @@ jobs:
 
       # Step 5: Set up kubectl
       - name: Set up kubectl
-        uses: actions/setup-kubectl@v3
+        uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
 
