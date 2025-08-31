@@ -28,18 +28,23 @@ jobs:
       - name: Test OIDC assume role
         run: |
           aws sts get-caller-identity
-            - name: Update kubeconfig for EKS
-        # run: |
-        #   aws eks update-kubeconfig --name cicd-cluster --region us-east-1
 
+      # Step 4: Update kubeconfig for EKS
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --name cicd-cluster --region us-east-1
+
+      # Step 5: Set up kubectl
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
 
+      # Step 6: Deploy manifests to EKS
       - name: Deploy manifests to EKS
         run: |
           kubectl apply -f k8s/
+
 
 #  # Step 4: Log in to Amazon ECR
 #       - name: Login to Amazon ECR
