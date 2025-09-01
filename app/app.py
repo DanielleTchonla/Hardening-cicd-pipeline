@@ -45,8 +45,8 @@ def hello():
     </head>
     <body>
         <h1>✨ Welcome to My Flask CI/CD App ✨</h1>
-        <p>Hello from Flask CI/CD! Your pipeline is working beautifully.</p>
-        <div class="footer">Powered by Kubernetes & GitHub Actions</div>
+        <p>Hello from Flask CI/CD! Your hardened pipeline is working beautifully.</p>
+        <div class="footer">Powered by Kubernetes & GitHub Actions, Danielle Felix</div>
     </body>
     </html>
     """
