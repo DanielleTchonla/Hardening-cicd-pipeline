@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: aws-auth
-  namespace: kube-system
+  #namespace: Hardening-namespace
 data:
   mapRoles: |
     - rolearn: arn:aws:iam::746669235620:role/GitHubActionsRole
