@@ -1,3 +1,68 @@
+# name: "CI/CD Pipeline (EKS + ECR via OIDC)"
+
+# on:
+#   push:
+#     branches: ["main"]
+
+# permissions:
+#   id-token: write
+#   contents: read
+
+# env:
+#   AWS_REGION: us-east-1
+#   ECR_REPOSITORY: flask-cicd
+#   IMAGE_TAG: ${{ github.sha }}
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       # step 0 create a k8 namespace
+#       - name: Create namespace
+#         run: kubectl apply -f eks/namespace.yml
+
+#       # Step 1: Checkout code
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       # Step 2: Configure AWS credentials via OIDC
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: arn:aws:iam::746669235620:role/GitHubActionsRole
+#           aws-region: ${{ env.AWS_REGION }}
+
+#       # Step 3: Verify access
+#       - name: Test AWS CLI access
+#         run: aws sts get-caller-identity
+
+#       # Step 4: Log in to ECR
+#       - name: Login to Amazon ECR
+#         id: ecr-login
+#         uses: aws-actions/amazon-ecr-login@v2
+
+#       # Step 5: Build and push Docker image
+#       - name: Build and push Docker image
+#         run: |
+#           docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+#           docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+#           docker push ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+#       # Step 6: Update kubeconfig for EKS
+#       - name: Update kubeconfig
+#         run: |
+#           aws eks update-kubeconfig --region $AWS_REGION --name cicd-cluster
+#           kubectl config view
+#           kubectl get nodes
+
+#       # Step 7: Deploy manifests to EKS
+#       - name: Deploy to EKS
+#         run: |
+#           kubectl set image deployment/flask-app flask-app=${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+#           kubectl rollout status deployment/flask-app -n Hardening-namespace
+
+
 name: "CI/CD Pipeline (EKS + ECR via OIDC)"
 
 on:
@@ -12,15 +77,18 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: flask-cicd
   IMAGE_TAG: ${{ github.sha }}
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  GENERIC_WEBHOOK: ${{ secrets.GENERIC_WEBHOOK }}
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # step 0 create a k8 namespace
+      # Step 0: Create namespace
       - name: Create namespace
         run: kubectl apply -f eks/namespace.yml
+        continue-on-error: true  # avoid failure if namespace already exists
 
       # Step 1: Checkout code
       - name: Checkout code
@@ -37,17 +105,24 @@ jobs:
       - name: Test AWS CLI access
         run: aws sts get-caller-identity
 
-      # Step 4: Log in to ECR
+      # Step 4: Log in to Amazon ECR
       - name: Login to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Step 5: Build and push Docker image
+      # Step 5: Build and push Docker image (with caching + retries)
       - name: Build and push Docker image
         run: |
-          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build \
+            --cache-from=${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:cache \
+            --tag $ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG \
+            ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
           docker push ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG \
+            ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:cache
+          docker push ${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:cache
+        retry: 3   # retry logic (harden build)
 
       # Step 6: Update kubeconfig for EKS
       - name: Update kubeconfig
@@ -56,10 +131,36 @@ jobs:
           kubectl config view
           kubectl get nodes
 
-      # Step 7: Deploy manifests to EKS
+      # Step 7: Deploy manifests to EKS (with retry logic)
       - name: Deploy to EKS
         run: |
-          kubectl set image deployment/flask-app flask-app=${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          kubectl set image deployment/flask-app flask-app=${{ steps.ecr-login.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG -n Hardening-namespace
           kubectl rollout status deployment/flask-app -n Hardening-namespace
+        retry: 2
 
+      # Step 8: Slack notification
+      - name: Send Slack notification
+        if: always() # runs on success or failure
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text": "CI/CD Pipeline finished with status: ${{ job.status }}"}' \
+          $SLACK_WEBHOOK
 
+      # Step 9: Webhook simulation
+      - name: Send webhook notification
+        if: always()
+        run: |
+          curl -X POST -H 'Content-Type: application/json' \
+          -d '{"pipeline": "EKS-CI/CD", "status": "${{ job.status }}"}' \
+          $https://webhook.site/13d0036f-cfd4-4b63-94ad-c88eaae9bbef
+
+  # Step 10: Failure simulation job (runs in parallel)
+  failure-simulation:
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    if: always()
+    steps:
+      - name: Simulate failure
+        run: |
+          echo "Simulating failure..."
+          exit 1
