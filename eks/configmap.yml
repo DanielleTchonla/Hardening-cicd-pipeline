@@ -5,7 +5,7 @@ metadata:
   #namespace: Hardening-namespace
 data:
   mapRoles: |
-    - rolearn: arn:aws:iam::746669235620:role/GitHubActionsRole
+    - rolearn: # ADD YOUR GitHubActions Role here
       username: github-actions
       groups:
         - system:masters

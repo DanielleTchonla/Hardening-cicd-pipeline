@@ -52,7 +52,7 @@ module "managed_nodes" {
   cluster_name   = "cicd-cluster"
   node_group_name = "eks-managed-nodes"
   instance_types = ["t3.medium"]
-  node_role_arn  = "arn:aws:iam::746669235620:role/eks-node-role"
+  node_role_arn  = "arn:aws:iam::xxxxxxxxxxxxx:role/eks-node-role" #change with your role arn
   subnet_ids     = ["subnet-04c78a79fb2cae3a8","subnet-05f21de0eaa13ebc2"]
   desired_size   = 2
   max_size       = 3

@@ -21,16 +21,7 @@ nodeGroups:
     privateNetworking: true
 
     iam:
-      instanceRoleARN: arn:aws:iam::746669235620:role/eks-node-role
+      instanceRoleARN: #ADD YOUR ROLE 
     ssh:
       allow: true
       publicKeyName: NVirg-key
-
-# nodeGroups:
-#   - name: ng-linux
-#     instanceType: t3.medium
-#     desiredCapacity: 2
-#     minSize: 1
-#     maxSize: 3
-#     volumeSize: 20
-#     privateNetworking: true

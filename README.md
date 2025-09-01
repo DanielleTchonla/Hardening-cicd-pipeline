@@ -184,4 +184,6 @@ Docker caching to speed up builds
 
 By following this setup, you ensure your EKS deployments are automated, secure, and robust.
 
-![alt text](image-1.png)
+![GitHub Actions Pipeline](image-3.png)
+![[Flask App]](image-2.png)
+

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: 746669235620.dkr.ecr.us-east-1.amazonaws.com/flask-cicd:v1
+          image: #ADD Image from your ECR REPO
           ports:
             - containerPort: 5000
 #let's ensures Kubernetes knows when your app is ready and healthy

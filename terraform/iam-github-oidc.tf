@@ -5,7 +5,7 @@
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  thumbprint_list = ["xxxxxxxxxxxx"] #Replace with your thumbprint
 }
 
 
@@ -21,7 +21,7 @@ resource "aws_iam_role" "github_actions" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::746669235620:oidc-provider/token.actions.githubusercontent.com"
+          Federated = "arn:aws:iam::xxxxxxxxxxxx:oidc-provider/token.actions.githubusercontent.com"#replace with your role ARN
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
@@ -31,7 +31,7 @@ resource "aws_iam_role" "github_actions" {
           }
           StringLike = {
             # Must match this repository and branch exactly
-            "token.actions.githubusercontent.com:sub" = "repo:DanielleTchonla/Hardening-cicd-pipeline:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:ACCOUNT-NAME/YOUR-REPO-NAME:ref:refs/heads/main"
           }
         }
       }
@@ -55,7 +55,7 @@ resource "aws_iam_policy" "github_actions_eks_policy" {
           "eks:ListNodegroups",
           "eks:ListFargateProfiles"
         ]
-        Resource = "arn:aws:eks:us-east-1:746669235620:cluster/cicd-cluster"
+        Resource = "arn:aws:eks:us-east-1:xxxxxxxx:cluster/cicd-cluster"#replace with your resource arn
       },
       {
         Effect   = "Allow"
